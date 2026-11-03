@@ -1,0 +1,16 @@
+services:
+  app:
+    build: .
+    environment:
+      TZ: Asia/Tokyo
+    depends_on:
+      otelcol:
+        condition: service_started
+
+  otelcol:
+    image: otel/opentelemetry-collector-contrib:0.164.0
+    environment:
+      TZ: Asia/Tokyo
+    command: ["--config=/etc/otelcol/config.yaml"]
+    volumes:
+      - ./otelcol.yaml:/etc/otelcol/config.yaml:ro

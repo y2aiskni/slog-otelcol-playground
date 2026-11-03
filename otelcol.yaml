@@ -1,0 +1,43 @@
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+
+processors:
+  # さくらのクラウド モニタリングスイート向けに、bodyをオブジェクト化する
+  transform/text_payload:
+    error_mode: propagate
+    log_statements:
+      - context: log
+        conditions:
+          - IsString(body)
+        statements:
+          - 'set(body, {"message": body})'
+  # attributes["kind"]をbody["log_name"]に移動する
+  transform/log_name:
+    error_mode: propagate
+    log_statements:
+      - context: log
+        conditions:
+          - IsMap(body) and IsString(attributes["kind"])
+        statements:
+          - set(body["log_name"], attributes["kind"])
+          - delete_key(attributes, "kind")
+
+exporters:
+  debug:
+    verbosity: detailed
+  otlp_http/sakura:
+    endpoint: https://logs.example.com
+    headers:
+      Authorization: Bearer log-XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX-XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+    compression: gzip
+    timeout: 30s
+
+service:
+  pipelines:
+    logs:
+      receivers: [otlp]
+      processors: [transform/text_payload, transform/log_name]
+      exporters: [debug, otlp_http/sakura]
