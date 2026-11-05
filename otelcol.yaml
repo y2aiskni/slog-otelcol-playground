@@ -24,6 +24,72 @@ processors:
         statements:
           - set(body["log_name"], attributes["kind"])
           - delete_key(attributes, "kind")
+  # モニタリングスイートでフィルタリングしやすいように、HTTPリクエスト関連の属性をbodyに移動する
+  # NOTE: 以下のようなやり方もあるなと思ったが、想定外のフィールドまでbodyに移動してしまう可能性があるのでやめた(面倒。move関数みたいなのがあれば簡潔に書けそう。)
+  # ```yaml
+  # statements:
+  #   # 一時マップにすべてコピーして、http_から始まるフィールドだけ残す
+  #   - set(cache["http"], attributes)
+  #   - keep_matching_keys(cache["http"], "^http_")
+
+  #   # bodyへマージし、attributesからは削除
+  #   - merge_maps(body, cache["http"], "upsert")
+  #   - delete_matching_keys(attributes, "^http_")
+  # ```
+  transform/http_request:
+    error_mode: propagate
+    log_statements:
+      - context: log
+        conditions:
+          - IsMap(body) and body["log_name"] == "http"
+        statements:
+          - set(body["http_cache_fill_bytes"], attributes["http_cache_fill_bytes"]) where attributes["http_cache_fill_bytes"] != nil
+          - delete_key(attributes, "http_cache_fill_bytes")
+
+          - set(body["http_cache_hit"], attributes["http_cache_hit"]) where attributes["http_cache_hit"] != nil
+          - delete_key(attributes, "http_cache_hit")
+
+          - set(body["http_cache_lookup"], attributes["http_cache_lookup"]) where attributes["http_cache_lookup"] != nil
+          - delete_key(attributes, "http_cache_lookup")
+
+          - set(body["http_latency_ns"], attributes["http_latency_ns"]) where attributes["http_latency_ns"] != nil
+          - delete_key(attributes, "http_latency_ns")
+
+          - set(body["http_protocol"], attributes["http_protocol"]) where attributes["http_protocol"] != nil
+          - delete_key(attributes, "http_protocol")
+
+          - set(body["http_referer"], attributes["http_referer"]) where attributes["http_referer"] != nil
+          - delete_key(attributes, "http_referer")
+
+          - set(body["http_remote_ip"], attributes["http_remote_ip"]) where attributes["http_remote_ip"] != nil
+          - delete_key(attributes, "http_remote_ip")
+
+          - set(body["http_remote_port"], attributes["http_remote_port"]) where attributes["http_remote_port"] != nil
+          - delete_key(attributes, "http_remote_port")
+
+          - set(body["http_request_method"], attributes["http_request_method"]) where attributes["http_request_method"] != nil
+          - delete_key(attributes, "http_request_method")
+
+          - set(body["http_request_size"], attributes["http_request_size"]) where attributes["http_request_size"] != nil
+          - delete_key(attributes, "http_request_size")
+
+          - set(body["http_request_url"], attributes["http_request_url"]) where attributes["http_request_url"] != nil
+          - delete_key(attributes, "http_request_url")
+
+          - set(body["http_response_size"], attributes["http_response_size"]) where attributes["http_response_size"] != nil
+          - delete_key(attributes, "http_response_size")
+
+          - set(body["http_scheme"], attributes["http_scheme"]) where attributes["http_scheme"] != nil
+          - delete_key(attributes, "http_scheme")
+
+          - set(body["http_status_code"], attributes["http_status_code"]) where attributes["http_status_code"] != nil
+          - delete_key(attributes, "http_status_code")
+
+          - set(body["http_user"], attributes["http_user"]) where attributes["http_user"] != nil
+          - delete_key(attributes, "http_user")
+
+          - set(body["http_user_agent"], attributes["http_user_agent"]) where attributes["http_user_agent"] != nil
+          - delete_key(attributes, "http_user_agent")
 
 exporters:
   debug:
@@ -43,6 +109,7 @@ service:
       processors:
         - transform/body
         - transform/log_name
+        - transform/http_request
       exporters:
         - debug
         - otlp_http/sakura
