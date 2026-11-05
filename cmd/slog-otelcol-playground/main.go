@@ -30,7 +30,24 @@ func run(ctx context.Context) error {
 	// 雑にログを出力する
 	slog.DebugContext(ctx, "debug log", slog.Bool("enabled", true))
 	slog.InfoContext(ctx, "hello from slog", slog.Int("count", 1))
-	slog.Default().WithGroup("request").InfoContext(ctx, "request completed", slog.String("method", "GET"), slog.Int("status", 200))
+	slog.With(slog.String("kind", "http")).InfoContext(ctx, "request completed",
+		slog.String("http_request_method", "GET"),
+		slog.String("http_request_url", "https://example.com/api/v1/resource"),
+		slog.Int("http_request_size", 123),
+		slog.Int("http_status_code", 200),
+		slog.Int("http_response_size", 456),
+		slog.String("http_user_agent", "Mozilla/5.0"),
+		slog.String("http_remote_ip", "203.0.113.1"),
+		slog.Int("http_remote_port", 12345),
+		slog.String("http_referer", "https://example.com/previous"),
+		slog.Int64("http_latency_ns", 123456789),
+		slog.Bool("http_cache_lookup", true),
+		slog.Bool("http_cache_hit", true),
+		slog.Int("http_cache_fill_bytes", 0),
+		slog.String("http_protocol", "HTTP/1.1"),
+		slog.String("http_scheme", "https"),
+		slog.String("http_user", "alice"),
+	)
 	slog.WarnContext(ctx, "warning log", slog.String("message", "tab\tand newline\nare escaped"))
 	slog.ErrorContext(ctx, "sample error log", slog.Any("error", errors.New("example error")))
 
