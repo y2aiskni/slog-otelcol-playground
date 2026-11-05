@@ -6,7 +6,7 @@ receivers:
 
 processors:
   # さくらのクラウド モニタリングスイート向けに、bodyをオブジェクト化する
-  transform/text_payload:
+  transform/body:
     error_mode: propagate
     log_statements:
       - context: log
@@ -38,6 +38,11 @@ exporters:
 service:
   pipelines:
     logs:
-      receivers: [otlp]
-      processors: [transform/text_payload, transform/log_name]
-      exporters: [debug, otlp_http/sakura]
+      receivers:
+        - otlp
+      processors:
+        - transform/body
+        - transform/log_name
+      exporters:
+        - debug
+        - otlp_http/sakura
