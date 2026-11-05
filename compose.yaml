@@ -6,6 +6,18 @@ services:
     depends_on:
       otelcol:
         condition: service_started
+    develop:
+      watch:
+        - path: ./go.mod
+          action: rebuild
+        - path: ./go.sum
+          action: rebuild
+        - path: ./cmd
+          target: /src/cmd
+          action: sync+restart
+        - path: ./internal
+          target: /src/internal
+          action: sync+restart
 
   otelcol:
     image: otel/opentelemetry-collector-contrib:0.164.0
@@ -14,3 +26,8 @@ services:
     command: ["--config=/etc/otelcol/config.yaml"]
     volumes:
       - ./otelcol.yaml:/etc/otelcol/config.yaml:ro
+    develop:
+      watch:
+        - path: ./otelcol.yaml
+          target: /etc/otelcol/config.yaml
+          action: restart
